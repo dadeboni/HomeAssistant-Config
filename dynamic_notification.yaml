@@ -1,0 +1,154 @@
+blueprint:
+  name: Advanced Mobile Device Notifier
+  author: debonisd
+  description: >
+    Send customized notifications to mobile devices based on their location state.
+    Supports filtering by home, away, all locations, or a specific zone.
+    Compatible with both iOS and Android devices, with options for critical and non-critical alerts.
+  domain: script
+  input:
+    filter_state:
+      name: Location Filter
+      description: >
+        Choose which devices to notify based on their current location state.
+      selector:
+        select:
+          options:
+            - label: Home
+              value: home
+            - label: Away
+              value: away
+            - label: All Locations
+              value: all
+            - label: Custom Zone
+              value: custom_zone
+      default: all
+
+    custom_zone_name:
+      name: Custom Zone Name
+      description: >
+        If 'Custom Zone' is selected above, enter the exact name of the zone here (case-sensitive).
+        Leave empty if not using a custom zone.
+      default: ""
+      selector:
+        text:
+
+    notification_title:
+      name: Notification Title
+      description: The title of the notification.
+      default: ""
+      selector:
+        text:
+
+    notification_message:
+      name: Notification Message
+      description: The main content of the notification.
+      default: ""
+      selector:
+        text:
+
+    critical_alert:
+      name: Critical Alert
+      description: >
+        If enabled, the notification will be sent as a critical alert (iOS) or high priority (Android).
+        Use this for important notifications that should override silent modes.
+      default: false
+      selector:
+        boolean:
+
+    notification_sound:
+      name: Notification Sound
+      description: >
+        Choose a sound for the notification. Use 'default' for the default sound,
+        or specify a valid sound name for the device.
+      default: "default"
+      selector:
+        text:
+
+mode: parallel
+max_exceeded: silent
+
+variables:
+  filter_state: !input filter_state
+  custom_zone_name: !input custom_zone_name
+  notification_title: !input notification_title
+  notification_message: !input notification_message
+  critical_alert: !input critical_alert
+  notification_sound: !input notification_sound
+  home_states: ['home', 'Home']
+  all_zones: "{{ states.zone | map(attribute='name') | list }}"
+  filtered_states: >
+    {% if filter_state == 'custom_zone' %}
+      [custom_zone_name]
+    {% elif filter_state == 'home' %}
+      home_states
+    {% elif filter_state == 'away' %}
+      ['not_home']
+    {% else %}
+      home_states + ['not_home'] + all_zones
+    {% endif %}
+  home_devices: >
+    {{ states.device_tracker 
+       | selectattr('state', 'in', filtered_states)
+       | map(attribute='entity_id')
+       | list }}
+  mobile_app_devices: >
+    {{ integration_entities('mobile_app') 
+       | select('match', 'device_tracker') 
+       | list }}
+  notify_services: >
+    {{ home_devices 
+       | select('in', mobile_app_devices)
+       | map('regex_replace', '^device_tracker\\.', 'notify.mobile_app_')
+       | list }}
+
+sequence:
+  - repeat:
+      for_each: "{{ notify_services }}"
+      sequence:
+        - service: "{{ repeat.item }}"
+          data:
+            title: "{{ notification_title }}"
+            message: "{{ notification_message }}"
+            data:
+              push:
+                sound: "{{ notification_sound }}"
+                critical: "{{ 1 if critical_alert else 0 }}"
+                volume: "{{ 1.0 if critical_alert else None }}"
+                interruption-level: "{{ 'critical' if critical_alert else 'active' }}"
+              importance: high
+              priority: high
+              ttl: 0
+              tag: "{{ notification_title | lower }}"
+              channel: "alerts"
+              apns_headers:
+                apns-push-type: >-
+                  {{ 'critical' if critical_alert and 'ios' in repeat.item else 'alert' }}
+              category: >-
+                {{ 'TIME_SENSITIVE' if critical_alert and 'ios' in repeat.item else 
+                  'ALARM_STREAM' if critical_alert else '' }}
+
+  - service: logbook.log
+    data:
+      name: "Notify Mobile Devices: Priority"
+      message: >-
+        Sent notification with Title: "{{ notification_title }}"
+        Message: "{{ notification_message }}"
+        To: "{{ notiy_services | join(', ') }}"
+
+  - service: system_log.write
+    data:
+      level: debug
+      message: >-
+        Sent notifications to the following devices:
+        {{ notify_services | join(', ') }}
+
+  - service: system_log.write
+    data:
+      level: info
+      message: >-
+        Notification Parameters:
+        Title: "{{ notification_title }}"
+        Message: "{{ notification_message }}"
+        Critical: {{ critical_alert }}
+        Sound: "{{ notification_sound }}"
