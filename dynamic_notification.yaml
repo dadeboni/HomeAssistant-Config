@@ -146,3 +146,4 @@ sequence:
         Message: "{{ notification_message }}"
         Critical: {{ critical_alert }}
         Sound: "{{ notification_sound }}"
+  source: "https://raw.githubusercontent.com/dadeboni/HomeAssistant-Config/master/dynamic_notification.yaml"
