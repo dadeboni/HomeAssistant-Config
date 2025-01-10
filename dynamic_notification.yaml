@@ -1,7 +1,6 @@
 blueprint:
   name: Advanced Mobile Device Notifier
-  author: debonisd
-  source: https://github.com/dadeboni/HomeAssistant-Config/blob/master/dynamic_notification.yaml
+  author: dadeboni
   description: >
     Send customized notifications to mobile devices based on their location state.
     Supports filtering by home, away, all locations, or a specific zone.
