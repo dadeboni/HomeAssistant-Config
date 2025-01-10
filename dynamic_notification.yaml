@@ -6,6 +6,7 @@ blueprint:
     Supports filtering by home, away, all locations, or a specific zone.
     Compatible with both iOS and Android devices, with options for critical and non-critical alerts.
   domain: script
+  source_url: https://github.com/dadeboni/HomeAssistant-Config/blob/master/dynamic_notification.yaml
   input:
     filter_state:
       name: Location Filter
@@ -146,4 +147,4 @@ sequence:
         Message: "{{ notification_message }}"
         Critical: {{ critical_alert }}
         Sound: "{{ notification_sound }}"
-  source: https://github.com/dadeboni/HomeAssistant-Config/blob/master/dynamic_notification.yaml
+  
