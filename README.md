@@ -1,48 +1,82 @@
-Advanced Mobile Device Notifier Blueprint
-Overview
 
-This blueprint allows you to send customized notifications to mobile devices based on their location state. You can filter notifications by location (Home, Away, All Locations, or Custom Zone). The blueprint is compatible with both iOS and Android devices, and supports both critical and non-critical notifications.
-Features
 
-    Location-based Notification Filtering: Send notifications based on the current location state of the devices (Home, Away, All Locations, or Custom Zone).
-    Critical and Non-Critical Alerts: Option to send critical alerts (iOS) or high-priority notifications (Android) that override silent modes.
-    Customizable Sounds: Choose from default or custom notification sounds.
-    Mobile Device Compatibility: Works with devices integrated via mobile_app in Home Assistant.
+# Advanced Mobile Device Notifier Blueprint
 
-Requirements
+## Overview
 
-    Home Assistant setup with mobile_app integration for mobile device tracking.
-    Mobile devices registered under the device_tracker entity for each mobile device.
-    A working zone configuration if using the Custom Zone filter.
+This blueprint allows you to send customized notifications to mobile devices based on their location state. You can filter notifications by location (**Home**, **Away**, **All Locations**, or **Custom Zone**). The blueprint is compatible with both iOS and Android devices and supports both critical and non-critical notifications.
 
-Inputs
+---
 
-    Location Filter: Select the filter for location state (Home, Away, All Locations, or Custom Zone).
-    Custom Zone Name: If Custom Zone is selected, specify the exact name of the zone.
-    Notification Title: The title of the notification.
-    Notification Message: The content of the notification.
-    Critical Alert: If enabled, the notification will be sent as a critical alert (iOS) or high-priority (Android).
-    Notification Sound: Choose a sound for the notification (default sound or specify custom sound name).
+## Features
 
-How It Works
+- **Location-based Notification Filtering**: Send notifications based on the current location state of the devices (**Home**, **Away**, **All Locations**, or **Custom Zone**).
+- **Critical and Non-Critical Alerts**: Option to send critical alerts (iOS) or high-priority notifications (Android) that override silent modes.
+- **Customizable Sounds**: Choose from default or custom notification sounds.
+- **Mobile Device Compatibility**: Works with devices integrated via the `mobile_app` integration in Home Assistant.
 
-    Location Filtering: Based on the Location Filter selected, the blueprint will identify which mobile devices meet the criteria.
-    Notification Sending: Notifications are sent to the devices that match the filter conditions. If Critical Alert is enabled, notifications will be sent as critical (iOS) or high-priority (Android).
-    Logbook and System Logs: The blueprint logs information about which devices received the notification, as well as the parameters of the sent notification.
+---
 
-Example Use Cases
+## Requirements
 
-    Alert when family arrives home: Use the Home filter and set a notification message that lets you know when someone arrives.
-    Notify when a device leaves a specific area: Use the Away filter to notify when someone is away.
-    Send an urgent alert to all family members: Enable Critical Alert to override silent mode for critical situations.
+- **Home Assistant** setup with the `mobile_app` integration for mobile device tracking.
+- Mobile devices registered under the `device_tracker` entity.
+- A working zone configuration if using the **Custom Zone** filter.
 
-Logs
+---
 
-    Logbook: The logbook records the notifications sent with details such as notification title and message.
-    System Log: Logs the devices that received the notification and details of the notification (sound, priority, etc.).
+## Inputs
 
-Example YAML
+- **Location Filter**: Select the filter for location state (**Home**, **Away**, **All Locations**, or **Custom Zone**).
+- **Custom Zone Name**: If **Custom Zone** is selected, specify the exact name of the zone.
+- **Notification Title**: The title of the notification.
+- **Notification Message**: The content of the notification.
+- **Critical Alert**: If enabled, the notification will be sent as a critical alert (iOS) or high-priority (Android).
+- **Notification Sound**: Choose a sound for the notification (default sound or specify a custom sound name).
 
+---
+
+## How It Works
+
+1. **Location Filtering**:
+   - Based on the **Location Filter** selected, the blueprint identifies which mobile devices meet the criteria.
+2. **Notification Sending**:
+   - Notifications are sent to devices matching the filter conditions. If **Critical Alert** is enabled, notifications will override silent modes (iOS) or be marked high-priority (Android).
+3. **Logging**:
+   - The blueprint logs information about which devices received the notification and the parameters of the notification.
+
+---
+
+## Example Use Cases
+
+- **Alert when family arrives home**: Use the **Home** filter to notify when someone arrives.
+- **Notify when a device leaves a specific area**: Use the **Away** filter to send notifications when someone leaves a location.
+- **Send an urgent alert to all family members**: Enable **Critical Alert** to override silent mode for critical situations.
+
+---
+
+## Logs
+
+- **Logbook**: Records the notifications sent, including details like the notification title and message.
+- **System Log**: Logs the devices that received the notification and details such as sound and priority.
+
+---
+
+## Troubleshooting
+
+If notifications are not working as expected, check the following:
+
+- **Device Integration**: Ensure devices are correctly integrated and tracked via the `device_tracker` entity.
+- **Filter Criteria**: Confirm the correct **Location Filter** is selected and that devices meet the criteria.
+- **System Logs**: Check logs for issues in notification delivery or blueprint execution.
+
+---
+
+## Example YAML
+
+Below is an example YAML configuration for the blueprint:
+
+```yaml
 blueprint:
   name: Advanced Mobile Device Notifier
   author: debonisd
@@ -109,13 +143,12 @@ blueprint:
       default: "default"
       selector:
         text:
+```
 
-Troubleshooting
+---
 
-If you are not seeing notifications, check the following:
+### Final Touch
 
-    Ensure that the devices are correctly integrated and tracked via the device_tracker entity.
-    Confirm that the correct location filter is selected and that the devices meet the filtering criteria.
-    Check the system logs for any issues with the notification process.
+> **Note**: If you encounter any issues or have suggestions, feel free to open an issue or submit a pull request in this repository.
 
-
+---

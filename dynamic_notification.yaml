@@ -1,6 +1,7 @@
 blueprint:
   name: Advanced Mobile Device Notifier
   author: debonisd
+  source: https://github.com/dadeboni/HomeAssistant-Config/blob/master/dynamic_notification.yaml
   description: >
     Send customized notifications to mobile devices based on their location state.
     Supports filtering by home, away, all locations, or a specific zone.
@@ -116,25 +117,19 @@ sequence:
                 critical: "{{ 1 if critical_alert else 0 }}"
                 volume: "{{ 1.0 if critical_alert else None }}"
                 interruption-level: "{{ 'critical' if critical_alert else 'active' }}"
-              importance: high
-              priority: high
-              ttl: 0
-              tag: "{{ notification_title | lower }}"
-              channel: "alerts"
               apns_headers:
                 apns-push-type: >-
                   {{ 'critical' if critical_alert and 'ios' in repeat.item else 'alert' }}
               category: >-
-                {{ 'TIME_SENSITIVE' if critical_alert and 'ios' in repeat.item else 
-                  'ALARM_STREAM' if critical_alert else '' }}
+                {{ 'TIME_SENSITIVE' if critical_alert and 'ios' in repeat.item else '' }}
 
   - service: logbook.log
     data:
       name: "Notify Mobile Devices: Priority"
       message: >-
-        Sent notification with Title: "{{ notification_title }}"
-        Message: "{{ notification_message }}"
-        To: "{{ notiy_services | join(', ') }}"
+        Sent notification with Title: "{{ notification_title if notification_title is defined else 'Default Title' }}"
+        Message: "{{ notification_message if notification_message is defined else 'No message provided' }}"
+        To: {{ notify_services | join(', ') if notify_services else 'No devices found' }}
 
   - service: system_log.write
     data:
