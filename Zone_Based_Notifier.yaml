@@ -1,0 +1,97 @@
+blueprint:
+  name: Zone-Based Notifier
+  author: dadeboni
+  description: >
+    Notify specific devices when a person enters or leaves a zone. 
+    Allows mapping of zones to devices for granular control over notifications.
+  domain: automation
+  input:
+    device_tracker_entities:
+      name: Device Tracker Entities
+      description: >
+        List of device trackers to monitor. Example:
+        `device_tracker.person_1, device_tracker.person_2`.
+      selector:
+        entity:
+          domain: device_tracker
+          multiple: true
+
+    zone_device_map:
+      name: Zone-Device Map
+      description: >
+        Map zones to devices that should receive notifications. 
+        Example: {"zone.home": ["notify.mobile_app_me"], "zone.work": ["notify.mobile_app_wife"]}.
+      selector:
+        object: {}
+
+    notification_title:
+      name: Notification Title
+      description: The title of the notification (dynamic placeholders supported).
+      default: "Zone Notification"
+      selector:
+        text:
+
+    notification_message:
+      name: Notification Message
+      description: >
+        The body of the notification. Use `{person}` and `{zone}` as placeholders.
+        Example: `{person} has entered {zone}`.
+      default: "{person} has entered {zone}"
+      selector:
+        text:
+
+    enter_leave:
+      name: Enter or Leave
+      description: >
+        Specify if the automation should trigger on entering, leaving, or both.
+      default: both
+      selector:
+        select:
+          options:
+            - both
+            - entering
+            - leaving
+
+trigger:
+  - platform: state
+    entity_id: !input device_tracker_entities
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+
+condition: []
+
+action:
+  - variables:
+      current_zone: "{{ trigger.to_state.state }}"
+      person: "{{ trigger.to_state.attributes.friendly_name }}"
+      notify_services: "{{ zone_device_map.get(current_zone, []) }}"
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >
+              {% set transition = (trigger.from_state.state, trigger.to_state.state) %}
+              {% if enter_leave == 'both' %}
+                true
+              {% elif enter_leave == 'entering' and transition[1] in zone_device_map %}
+                true
+              {% elif enter_leave == 'leaving' and transition[0] in zone_device_map %}
+                true
+              {% else %}
+                false
+              {% endif %}
+        sequence:
+          - service: "{{ notify_services | join(', ') }}"
+            data:
+              title: "{{ notification_title }}"
+              message: "{{ notification_message | replace('{person}', person) | replace('{zone}', current_zone) }}"
+  - service: logbook.log
+    data:
+      name: "Zone Notification"
+      message: >
+        Sent notification to: {{ notify_services | join(', ') }}
+        Title: "{{ notification_title }}"
+        Message: "{{ notification_message }}"
+        Zone: "{{ current_zone }}"
